@@ -70,7 +70,7 @@ The highest-value contribution is a **new entry or a sharper gotcha** in `data/e
 
 ## Related
 
-- [`tfrosetta`](../tfrosetta) — the CLI companion: converts actual AWS Terraform modules into annotated Azure/GCP equivalents, built on the same knowledge-base philosophy.
+- [`tfrosetta`](https://github.com/edeak54/tf-rosetta) — the CLI companion: converts actual AWS Terraform modules into annotated Azure/GCP equivalents, built on the same knowledge-base philosophy.
 
 ## Disclaimer
 
