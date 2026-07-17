@@ -1,0 +1,12 @@
+{
+  "name": "cloud-rosetta",
+  "version": "1.0.0",
+  "description": "A cross-cloud dictionary for people who already speak one cloud — AWS / Azure / GCP concepts, gotchas, and Terraform resources",
+  "scripts": {
+    "build": "node build.js",
+    "test": "node --test",
+    "dev": "node build.js && npx serve dist"
+  },
+  "license": "Apache-2.0",
+  "private": true
+}

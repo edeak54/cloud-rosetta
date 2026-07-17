@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 200" role="img" aria-label="Cloud Rosetta banner">
+  <defs>
+    <style>
+      .bg{fill:#F7F8FB}.card{fill:#FFFFFF;stroke:#E3E7EE}
+      .serif{font-family:Georgia,'Times New Roman',serif}
+      .mono{font-family:'Courier New',monospace}
+      .ink{fill:#171E29}.muted{fill:#5B6675}
+    </style>
+  </defs>
+  <rect class="bg" width="880" height="200" rx="12"/>
+  <text x="48" y="86" class="serif ink" font-size="46" font-weight="bold" letter-spacing="-0.5">Cloud Rosetta</text>
+  <text x="48" y="118" class="serif muted" font-size="17" font-style="italic">a dictionary for people who already speak one cloud</text>
+  <rect class="card" x="48" y="140" width="150" height="30" rx="15"/>
+  <text x="66" y="160" class="mono" font-size="13" fill="#B96D0E">AWS &#183; S3</text>
+  <text x="212" y="160" class="serif muted" font-size="16">&#8594;</text>
+  <rect class="card" x="234" y="140" width="196" height="30" rx="15"/>
+  <text x="252" y="160" class="mono" font-size="13" fill="#0B69C7">AZ &#183; Blob Storage</text>
+  <text x="444" y="160" class="serif muted" font-size="16">&#8594;</text>
+  <rect class="card" x="466" y="140" width="204" height="30" rx="15"/>
+  <text x="484" y="160" class="mono" font-size="13" fill="#1E8E3E">GCP &#183; Cloud Storage</text>
+  <text x="690" y="160" class="serif muted" font-size="14" font-style="italic">+ where it breaks</text>
+  <g transform="translate(690,44)">
+    <rect x="0" y="0" width="142" height="58" rx="8" fill="#EFEDFB"/>
+    <text x="14" y="24" class="serif" font-size="13" font-style="italic" fill="#5A4FCF" font-weight="bold">n., storage</text>
+    <text x="14" y="44" class="mono" font-size="11" fill="#5A4FCF">43 concepts &#183; 3 clouds</text>
+  </g>
+</svg>

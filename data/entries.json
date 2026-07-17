@@ -1,0 +1,991 @@
+[
+  {
+    "uni": "Isolation boundary",
+    "pos": "n., foundations",
+    "cat": "Foundations",
+    "aws": {
+      "n": "Account",
+      "d": "Hard blast-radius wall. Multi-account via Organizations + OUs is the norm."
+    },
+    "azure": {
+      "n": "Subscription",
+      "d": "Billing + policy boundary, grouped under Management Groups, inside one Entra tenant."
+    },
+    "gcp": {
+      "n": "Project",
+      "d": "The unit everything lives in, nested under Folders and an Organization."
+    },
+    "usage": "This is the #1 translation error. An Azure Subscription ≠ AWS account in weight — spinning up Subscriptions is cheap and routine; GCP Projects are even lighter (per app/env). AWS accounts are the heaviest boundary of the three.",
+    "tf": {
+      "aws": "aws_organizations_account",
+      "azure": "azurerm_subscription",
+      "gcp": "google_project"
+    }
+  },
+  {
+    "uni": "Fault domain",
+    "pos": "n., foundations",
+    "cat": "Foundations",
+    "aws": {
+      "n": "Availability Zone (AZ)",
+      "d": "Named per account (us-east-1a) — the letter maps differently across accounts."
+    },
+    "azure": {
+      "n": "Availability Zone",
+      "d": "Zones 1–3 per region; some services instead use Availability Sets (rack-level)."
+    },
+    "gcp": {
+      "n": "Zone",
+      "d": "Named globally and consistently (asia-southeast2-a)."
+    },
+    "usage": "Same word, different guarantees: Azure regions historically didn't all have zones; GCP zone names are stable across projects while AWS AZ letters are shuffled per account (use AZ IDs for cross-account work).",
+    "tf": {
+      "aws": "aws_availability_zones (data)",
+      "azure": "azurerm_location (data)",
+      "gcp": "google_compute_zones (data)"
+    }
+  },
+  {
+    "uni": "Resource grouping",
+    "pos": "n., foundations",
+    "cat": "Foundations",
+    "aws": {
+      "n": "Tags (+ Resource Groups)",
+      "d": "Grouping is logical, via tags; AWS Resource Groups are just saved tag queries."
+    },
+    "azure": {
+      "n": "Resource Group",
+      "d": "Mandatory container — every resource lives in exactly one RG; deleting the RG deletes everything."
+    },
+    "gcp": {
+      "n": "Project + labels",
+      "d": "The project itself is the group; labels add metadata."
+    },
+    "usage": "Azure RGs are structural, not cosmetic. Coming from AWS, the shock is that a resource cannot exist outside an RG, and RG-delete is a real (and dangerous) lifecycle operation.",
+    "tf": {
+      "aws": "aws_resourcegroups_group",
+      "azure": "azurerm_resource_group",
+      "gcp": "google_project"
+    }
+  },
+  {
+    "uni": "Native IaC",
+    "pos": "n., foundations",
+    "cat": "Foundations",
+    "aws": {
+      "n": "CloudFormation",
+      "d": "JSON/YAML stacks; CDK compiles to it."
+    },
+    "azure": {
+      "n": "ARM templates / Bicep",
+      "d": "Bicep is the modern DSL that transpiles to ARM JSON."
+    },
+    "gcp": {
+      "n": "(Deployment Manager, legacy)",
+      "d": "Effectively deprecated in practice — Google itself points people to Terraform."
+    },
+    "usage": "If your team is Terraform-first (yours is), this row mostly matters for reading other people's legacy stacks during migrations.",
+    "tf": {
+      "aws": "aws_cloudformation_stack",
+      "azure": "azurerm_resource_group_template_deployment",
+      "gcp": "—"
+    }
+  },
+  {
+    "uni": "Virtual machine",
+    "pos": "n., compute",
+    "cat": "Compute",
+    "aws": {
+      "n": "EC2 Instance",
+      "d": "Instance types like t3.medium, m7i.large."
+    },
+    "azure": {
+      "n": "Virtual Machine",
+      "d": "VM sizes like Standard_D2s_v5."
+    },
+    "gcp": {
+      "n": "Compute Engine instance",
+      "d": "Machine types like e2-standard-2; custom machine types are a GCP-only trick."
+    },
+    "usage": "GCP lets you dial arbitrary vCPU/RAM combos (custom machine types) and live-migrates VMs during host maintenance — there's no AWS-style 'scheduled reboot for maintenance' culture.",
+    "tf": {
+      "aws": "aws_instance",
+      "azure": "azurerm_linux_virtual_machine",
+      "gcp": "google_compute_instance"
+    }
+  },
+  {
+    "uni": "Machine image",
+    "pos": "n., compute",
+    "cat": "Compute",
+    "aws": {
+      "n": "AMI",
+      "d": "Amazon Machine Image, region-scoped, copied explicitly across regions."
+    },
+    "azure": {
+      "n": "Image (Compute Gallery)",
+      "d": "Azure Compute Gallery (ex Shared Image Gallery) handles versioning + replication."
+    },
+    "gcp": {
+      "n": "Custom Image / Machine Image",
+      "d": "Images are global to the project by default."
+    },
+    "usage": "AWS AMIs are per-region artifacts you must copy; GCP images are project-global, so multi-region rollout pipelines look very different.",
+    "tf": {
+      "aws": "aws_ami",
+      "azure": "azurerm_shared_image",
+      "gcp": "google_compute_image"
+    }
+  },
+  {
+    "uni": "Autoscaling VM fleet",
+    "pos": "n., compute",
+    "cat": "Compute",
+    "aws": {
+      "n": "Auto Scaling Group (ASG)",
+      "d": "Launch template + scaling policies."
+    },
+    "azure": {
+      "n": "VM Scale Set (VMSS)",
+      "d": "Flexible orchestration mode is the modern default."
+    },
+    "gcp": {
+      "n": "Managed Instance Group (MIG)",
+      "d": "Instance template + autoscaler; regional MIGs spread across zones."
+    },
+    "usage": "Functionally the closest 1:1:1 mapping in this dictionary. The trap: GCP autoscaler and MIG are separate resources in Terraform, not one block like an ASG.",
+    "tf": {
+      "aws": "aws_autoscaling_group",
+      "azure": "azurerm_orchestrated_virtual_machine_scale_set",
+      "gcp": "google_compute_instance_group_manager"
+    }
+  },
+  {
+    "uni": "Discounted interruptible compute",
+    "pos": "n., compute",
+    "cat": "Compute",
+    "aws": {
+      "n": "Spot Instances",
+      "d": "2-minute interruption notice; price varies by pool."
+    },
+    "azure": {
+      "n": "Spot VMs",
+      "d": "Evicted on capacity/price; supports max-price cap."
+    },
+    "gcp": {
+      "n": "Spot VMs (ex-Preemptible)",
+      "d": "30-second preemption notice; old preemptibles had a hard 24h max life."
+    },
+    "usage": "Interruption semantics differ — AWS gives 120s warning, GCP gives 30s. Design your drain hooks around the worst case of whichever cloud you're on.",
+    "tf": {
+      "aws": "aws_instance (spot opts)",
+      "azure": "azurerm_linux_virtual_machine (priority)",
+      "gcp": "google_compute_instance (scheduling)"
+    }
+  },
+  {
+    "uni": "Virtual network",
+    "pos": "n., networking",
+    "cat": "Networking",
+    "aws": {
+      "n": "VPC",
+      "d": "Regional. Subnets are zonal. Cross-region = peering or Transit Gateway."
+    },
+    "azure": {
+      "n": "VNet",
+      "d": "Regional. Subnets are region-wide (not zonal). Global VNet Peering crosses regions."
+    },
+    "gcp": {
+      "n": "VPC",
+      "d": "GLOBAL. One VPC spans every region; subnets are regional."
+    },
+    "usage": "The single biggest mental-model break in cross-cloud networking. 'One VPC per region' is an AWS-ism — a GCP VPC is a global routing domain, and Azure subnets don't pin to zones at all.",
+    "tf": {
+      "aws": "aws_vpc",
+      "azure": "azurerm_virtual_network",
+      "gcp": "google_compute_network"
+    }
+  },
+  {
+    "uni": "Subnet",
+    "pos": "n., networking",
+    "cat": "Networking",
+    "aws": {
+      "n": "Subnet",
+      "d": "Zonal; public/private is determined by its route table."
+    },
+    "azure": {
+      "n": "Subnet",
+      "d": "Regional slice of the VNet; NSGs and route tables attach here."
+    },
+    "gcp": {
+      "n": "Subnetwork",
+      "d": "Regional; supports secondary IP ranges (the thing your EKS-style pod CIDRs map to)."
+    },
+    "usage": "GCP secondary ranges are first-class on the subnet — the closest analog to the secondary-CIDR-for-pods pattern you've fought with on EKS, but declared up front instead of bolted on.",
+    "tf": {
+      "aws": "aws_subnet",
+      "azure": "azurerm_subnet",
+      "gcp": "google_compute_subnetwork"
+    }
+  },
+  {
+    "uni": "Instance-level firewall",
+    "pos": "n., networking",
+    "cat": "Networking",
+    "aws": {
+      "n": "Security Group",
+      "d": "Stateful, attached to ENIs, allow-only rules that can reference other SGs."
+    },
+    "azure": {
+      "n": "Network Security Group (NSG)",
+      "d": "Stateful, attached to subnets or NICs, has allow AND deny with priorities."
+    },
+    "gcp": {
+      "n": "VPC Firewall Rules",
+      "d": "Live on the network, targeted via tags or service accounts — nothing 'attaches' to the VM."
+    },
+    "usage": "AWS SGs can't deny; NSGs can. GCP has no attached-to-instance object at all — rules select targets by tag/service-account, which flips how you write Terraform modules for it.",
+    "tf": {
+      "aws": "aws_security_group",
+      "azure": "azurerm_network_security_group",
+      "gcp": "google_compute_firewall"
+    }
+  },
+  {
+    "uni": "Outbound NAT",
+    "pos": "n., networking",
+    "cat": "Networking",
+    "aws": {
+      "n": "NAT Gateway",
+      "d": "Zonal appliance you place in a public subnet, per-AZ for HA, billed per hour + per GB."
+    },
+    "azure": {
+      "n": "NAT Gateway",
+      "d": "Attached to subnets; zone-resilient options vary."
+    },
+    "gcp": {
+      "n": "Cloud NAT",
+      "d": "Software-defined, hangs off a Cloud Router — no appliance, no subnet placement."
+    },
+    "usage": "Cloud NAT has no 'public subnet' concept to babysit and no per-AZ duplication. The AWS pattern of one NAT GW per AZ for HA simply doesn't translate.",
+    "tf": {
+      "aws": "aws_nat_gateway",
+      "azure": "azurerm_nat_gateway",
+      "gcp": "google_compute_router_nat"
+    }
+  },
+  {
+    "uni": "Network-to-network link",
+    "pos": "n., networking",
+    "cat": "Networking",
+    "aws": {
+      "n": "VPC Peering",
+      "d": "Non-transitive, pairwise."
+    },
+    "azure": {
+      "n": "VNet Peering",
+      "d": "Also non-transitive; Global Peering crosses regions."
+    },
+    "gcp": {
+      "n": "VPC Peering / Shared VPC",
+      "d": "Peering is non-transitive too, but Shared VPC lets many projects share one host network."
+    },
+    "usage": "All three peerings are non-transitive — but GCP's Shared VPC sidesteps the whole hub-and-spoke dance for intra-org cases: service projects just use the host project's network.",
+    "tf": {
+      "aws": "aws_vpc_peering_connection",
+      "azure": "azurerm_virtual_network_peering",
+      "gcp": "google_compute_shared_vpc_host_project"
+    }
+  },
+  {
+    "uni": "Transit hub",
+    "pos": "n., networking",
+    "cat": "Networking",
+    "aws": {
+      "n": "Transit Gateway",
+      "d": "Regional hub, peered across regions; the backbone of multi-VPC architectures."
+    },
+    "azure": {
+      "n": "Virtual WAN / Hub",
+      "d": "Managed global transit with vHubs per region."
+    },
+    "gcp": {
+      "n": "Network Connectivity Center",
+      "d": "Hub-and-spoke over Google's backbone; less needed because VPCs are already global."
+    },
+    "usage": "Your multi-account TGW architecture translates to vWAN on Azure almost 1:1. On GCP you may not need a hub at all — one global VPC + Shared VPC often replaces the entire pattern.",
+    "tf": {
+      "aws": "aws_ec2_transit_gateway",
+      "azure": "azurerm_virtual_hub",
+      "gcp": "google_network_connectivity_hub"
+    }
+  },
+  {
+    "uni": "Private access to services",
+    "pos": "n., networking",
+    "cat": "Networking",
+    "aws": {
+      "n": "VPC Endpoints / PrivateLink",
+      "d": "Interface + gateway endpoints; S3/Dynamo gateway endpoints are free."
+    },
+    "azure": {
+      "n": "Private Endpoint / Private Link",
+      "d": "Private IP for a PaaS service inside your VNet; pairs with Private DNS zones."
+    },
+    "gcp": {
+      "n": "Private Service Connect / Private Google Access",
+      "d": "PSC for producer/consumer; PGA gives subnets Google-API access with no endpoint objects."
+    },
+    "usage": "Azure Private Endpoints demand Private DNS zone wiring that surprises AWS folks (the DNS is the hard part, not the endpoint). GCP's Private Google Access needs zero per-service endpoints for Google APIs.",
+    "tf": {
+      "aws": "aws_vpc_endpoint",
+      "azure": "azurerm_private_endpoint",
+      "gcp": "google_compute_service_attachment"
+    }
+  },
+  {
+    "uni": "L7 load balancer",
+    "pos": "n., networking",
+    "cat": "Networking",
+    "aws": {
+      "n": "Application Load Balancer (ALB)",
+      "d": "One resource + listeners + target groups. Regional."
+    },
+    "azure": {
+      "n": "Application Gateway",
+      "d": "Regional L7 with WAF SKU; Front Door is the global L7 layer."
+    },
+    "gcp": {
+      "n": "Global External Application LB",
+      "d": "Not one resource — a chain: forwarding rule → target proxy → URL map → backend service. Globally anycast by default."
+    },
+    "usage": "GCP load balancers aren't appliances, they're 5–6 chained Terraform resources. Painful the first time, but you get a single global anycast IP — the thing AWS needs Global Accelerator to fake.",
+    "tf": {
+      "aws": "aws_lb",
+      "azure": "azurerm_application_gateway",
+      "gcp": "google_compute_url_map"
+    }
+  },
+  {
+    "uni": "DNS zone hosting",
+    "pos": "n., networking",
+    "cat": "Networking",
+    "aws": {
+      "n": "Route 53",
+      "d": "Zones + fancy routing policies (weighted, latency, failover) + health checks."
+    },
+    "azure": {
+      "n": "Azure DNS",
+      "d": "Zones; Traffic Manager handles the routing-policy tricks."
+    },
+    "gcp": {
+      "n": "Cloud DNS",
+      "d": "Zones incl. private zones; routing policies exist but are thinner."
+    },
+    "usage": "Route 53's routing policies are a bundled superpower — on Azure that's a separate product (Traffic Manager), so a 'just add latency routing' migration line-item becomes a new service.",
+    "tf": {
+      "aws": "aws_route53_zone",
+      "azure": "azurerm_dns_zone",
+      "gcp": "google_dns_managed_zone"
+    }
+  },
+  {
+    "uni": "CDN",
+    "pos": "n., networking",
+    "cat": "Networking",
+    "aws": {
+      "n": "CloudFront",
+      "d": "Distributions + origins + behaviors; pairs with S3 OAC."
+    },
+    "azure": {
+      "n": "Front Door",
+      "d": "Modern SKU merges CDN + global L7 LB + WAF into one product."
+    },
+    "gcp": {
+      "n": "Cloud CDN",
+      "d": "Not standalone — a checkbox on a global LB backend."
+    },
+    "usage": "Cloud CDN isn't a product you 'create', it's enable_cdn = true on a backend service. Azure Front Door meanwhile ate three products (CDN, global LB, WAF) — map CloudFront + ALB + WAF to it together.",
+    "tf": {
+      "aws": "aws_cloudfront_distribution",
+      "azure": "azurerm_cdn_frontdoor_profile",
+      "gcp": "google_compute_backend_service (cdn)"
+    }
+  },
+  {
+    "uni": "Object storage",
+    "pos": "n., storage",
+    "cat": "Storage",
+    "aws": {
+      "n": "S3",
+      "d": "Buckets, globally unique names, storage classes (Standard → Glacier)."
+    },
+    "azure": {
+      "n": "Blob Storage",
+      "d": "Two-level: Storage Account → Container → blobs. Tiers: Hot/Cool/Cold/Archive."
+    },
+    "gcp": {
+      "n": "Cloud Storage (GCS)",
+      "d": "Buckets with Standard/Nearline/Coldline/Archive; dual-region buckets are unique to GCP."
+    },
+    "usage": "Azure's extra layer bites Terraform modules: the Storage Account (not the container) owns networking, keys, and replication settings — an S3-bucket-shaped module won't port cleanly.",
+    "tf": {
+      "aws": "aws_s3_bucket",
+      "azure": "azurerm_storage_container",
+      "gcp": "google_storage_bucket"
+    }
+  },
+  {
+    "uni": "Block storage",
+    "pos": "n., storage",
+    "cat": "Storage",
+    "aws": {
+      "n": "EBS",
+      "d": "gp3/io2 volumes, zonal, attached to one instance (io2 supports multi-attach)."
+    },
+    "azure": {
+      "n": "Managed Disks",
+      "d": "Premium SSD v2 / Ultra tiers; disk is a first-class ARM resource."
+    },
+    "gcp": {
+      "n": "Persistent Disk / Hyperdisk",
+      "d": "Zonal or REGIONAL (synchronously replicated across two zones)."
+    },
+    "usage": "GCP regional persistent disks replicate across zones automatically — an HA primitive AWS simply doesn't have in EBS; you'd build DRBD or use multi-attach hacks instead.",
+    "tf": {
+      "aws": "aws_ebs_volume",
+      "azure": "azurerm_managed_disk",
+      "gcp": "google_compute_disk"
+    }
+  },
+  {
+    "uni": "Shared file system",
+    "pos": "n., storage",
+    "cat": "Storage",
+    "aws": {
+      "n": "EFS (NFS) / FSx",
+      "d": "EFS for NFS, FSx family for Windows/Lustre/NetApp."
+    },
+    "azure": {
+      "n": "Azure Files / NetApp Files",
+      "d": "SMB-first (plus NFS); mounts with storage account keys or AD auth."
+    },
+    "gcp": {
+      "n": "Filestore",
+      "d": "Managed NFS in tiers up to high-scale."
+    },
+    "usage": "Azure Files speaks SMB natively (Windows heritage); EFS and Filestore are NFS-first. A lift-and-shift of Windows file shares is genuinely easier on Azure.",
+    "tf": {
+      "aws": "aws_efs_file_system",
+      "azure": "azurerm_storage_share",
+      "gcp": "google_filestore_instance"
+    }
+  },
+  {
+    "uni": "Managed relational DB",
+    "pos": "n., databases",
+    "cat": "Databases",
+    "aws": {
+      "n": "RDS / Aurora",
+      "d": "RDS runs stock engines; Aurora is the cloud-native MySQL/Postgres flavor."
+    },
+    "azure": {
+      "n": "Azure SQL / Flexible Server",
+      "d": "Azure SQL for MSSQL; Flexible Server for Postgres/MySQL."
+    },
+    "gcp": {
+      "n": "Cloud SQL / AlloyDB",
+      "d": "Cloud SQL runs stock engines; AlloyDB is the Aurora-analog for Postgres."
+    },
+    "usage": "Map Aurora→AlloyDB, RDS→Cloud SQL/Flexible Server. On Azure, MSSQL is the home-turf engine with PaaS features (Managed Instance) that have no AWS twin.",
+    "tf": {
+      "aws": "aws_db_instance",
+      "azure": "azurerm_postgresql_flexible_server",
+      "gcp": "google_sql_database_instance"
+    }
+  },
+  {
+    "uni": "Serverless NoSQL (key-value/doc)",
+    "pos": "n., databases",
+    "cat": "Databases",
+    "aws": {
+      "n": "DynamoDB",
+      "d": "Single-digit-ms KV/doc store, on-demand or provisioned capacity."
+    },
+    "azure": {
+      "n": "Cosmos DB",
+      "d": "Multi-model, multi-region writes, five consistency levels, RU-based billing."
+    },
+    "gcp": {
+      "n": "Firestore / Bigtable",
+      "d": "Firestore for doc workloads; Bigtable for wide-column at scale."
+    },
+    "usage": "Cosmos is broader than Dynamo (multiple APIs incl. a Mongo facade) and its Request Unit billing model is its own discipline — do the RU math before promising cost parity.",
+    "tf": {
+      "aws": "aws_dynamodb_table",
+      "azure": "azurerm_cosmosdb_account",
+      "gcp": "google_firestore_database"
+    }
+  },
+  {
+    "uni": "Data warehouse",
+    "pos": "n., databases",
+    "cat": "Databases",
+    "aws": {
+      "n": "Redshift",
+      "d": "Cluster-based (or Serverless); you think in nodes and WLM."
+    },
+    "azure": {
+      "n": "Synapse / Fabric",
+      "d": "Synapse dedicated pools; Microsoft is steering everything toward Fabric."
+    },
+    "gcp": {
+      "n": "BigQuery",
+      "d": "Fully serverless, storage/compute separated, billed per TB scanned or slots."
+    },
+    "usage": "BigQuery has no cluster to size — the operational model (and the cost failure mode: a careless SELECT * over petabytes) is completely different from Redshift capacity planning.",
+    "tf": {
+      "aws": "aws_redshift_cluster",
+      "azure": "azurerm_synapse_workspace",
+      "gcp": "google_bigquery_dataset"
+    }
+  },
+  {
+    "uni": "Managed cache",
+    "pos": "n., databases",
+    "cat": "Databases",
+    "aws": {
+      "n": "ElastiCache",
+      "d": "Redis(-compatible)/Valkey and Memcached."
+    },
+    "azure": {
+      "n": "Azure Cache for Redis / Managed Redis",
+      "d": "Tiered SKUs; Enterprise tiers run Redis Labs stack."
+    },
+    "gcp": {
+      "n": "Memorystore",
+      "d": "Redis and Memcached."
+    },
+    "usage": "Near 1:1 conceptually. Watch version/feature lag per tier — cluster mode, persistence, and auth options differ by SKU more than by cloud.",
+    "tf": {
+      "aws": "aws_elasticache_cluster",
+      "azure": "azurerm_redis_cache",
+      "gcp": "google_redis_instance"
+    }
+  },
+  {
+    "uni": "Managed Kubernetes",
+    "pos": "n., containers",
+    "cat": "Containers",
+    "aws": {
+      "n": "EKS",
+      "d": "You own node groups, VPC CNI quirks, and the add-on lifecycle. Control plane billed hourly."
+    },
+    "azure": {
+      "n": "AKS",
+      "d": "Free control plane (paid SLA tier); node pools; deep Entra integration."
+    },
+    "gcp": {
+      "n": "GKE",
+      "d": "The reference implementation. Autopilot mode removes node management entirely."
+    },
+    "usage": "Your EKS scars (CNI IP exhaustion, subnet tagging races, managed node group upgrades) mostly don't exist on GKE Autopilot — Google runs the nodes. AKS sits between: easier than EKS, less magic than Autopilot.",
+    "tf": {
+      "aws": "aws_eks_cluster",
+      "azure": "azurerm_kubernetes_cluster",
+      "gcp": "google_container_cluster"
+    }
+  },
+  {
+    "uni": "Serverless containers",
+    "pos": "n., containers",
+    "cat": "Containers",
+    "aws": {
+      "n": "Fargate (ECS)",
+      "d": "Serverless data plane under ECS or EKS tasks."
+    },
+    "azure": {
+      "n": "Container Apps",
+      "d": "Built on KEDA + Dapr; scale-to-zero; ACI for raw single containers."
+    },
+    "gcp": {
+      "n": "Cloud Run",
+      "d": "Request-driven containers, scale-to-zero, arguably the best DX of the three."
+    },
+    "usage": "Fargate is a data plane, not a product like the other two — the honest mapping is ECS+Fargate ↔ Container Apps ↔ Cloud Run. Cloud Run and Container Apps scale to zero; plain ECS services don't.",
+    "tf": {
+      "aws": "aws_ecs_service",
+      "azure": "azurerm_container_app",
+      "gcp": "google_cloud_run_v2_service"
+    }
+  },
+  {
+    "uni": "Container registry",
+    "pos": "n., containers",
+    "cat": "Containers",
+    "aws": {
+      "n": "ECR",
+      "d": "Per-account registries, image scanning, pull-through cache."
+    },
+    "azure": {
+      "n": "ACR",
+      "d": "Registry with SKU tiers, geo-replication, and ACR Tasks (in-registry builds)."
+    },
+    "gcp": {
+      "n": "Artifact Registry",
+      "d": "Successor to GCR; also hosts npm/Maven/apt — not just containers."
+    },
+    "usage": "Artifact Registry is a universal artifact store, not just Docker — one service can replace ECR + CodeArtifact. ACR Tasks can build images server-side, which has no direct ECR twin.",
+    "tf": {
+      "aws": "aws_ecr_repository",
+      "azure": "azurerm_container_registry",
+      "gcp": "google_artifact_registry_repository"
+    }
+  },
+  {
+    "uni": "Function-as-a-service",
+    "pos": "n., serverless",
+    "cat": "Serverless",
+    "aws": {
+      "n": "Lambda",
+      "d": "15-min max, event-source mappings, the richest trigger ecosystem."
+    },
+    "azure": {
+      "n": "Azure Functions",
+      "d": "Hosting plans matter (Consumption vs Premium vs Dedicated); Durable Functions for workflows."
+    },
+    "gcp": {
+      "n": "Cloud Run functions",
+      "d": "Formerly Cloud Functions; 2nd gen literally runs on Cloud Run infrastructure."
+    },
+    "usage": "Timeout/cold-start behavior is plan-dependent on Azure in a way AWS people don't expect — 'Lambda but 60 minutes' is only true on certain plans. GCP has quietly merged functions into Cloud Run.",
+    "tf": {
+      "aws": "aws_lambda_function",
+      "azure": "azurerm_linux_function_app",
+      "gcp": "google_cloudfunctions2_function"
+    }
+  },
+  {
+    "uni": "API gateway",
+    "pos": "n., serverless",
+    "cat": "Serverless",
+    "aws": {
+      "n": "API Gateway",
+      "d": "REST + HTTP APIs, usage plans, Lambda authorizers."
+    },
+    "azure": {
+      "n": "API Management (APIM)",
+      "d": "Heavier: full API lifecycle product with developer portal and policies-as-XML."
+    },
+    "gcp": {
+      "n": "API Gateway / Apigee",
+      "d": "API Gateway is the lightweight one; Apigee is the enterprise APIM analog."
+    },
+    "usage": "AWS API Gateway ↔ GCP API Gateway (light) and Azure APIM ↔ Apigee (heavy). Mapping AWS API Gateway to APIM 1:1 overprovisions — APIM's cheapest useful tiers cost real money at idle.",
+    "tf": {
+      "aws": "aws_apigatewayv2_api",
+      "azure": "azurerm_api_management",
+      "gcp": "google_api_gateway_api"
+    }
+  },
+  {
+    "uni": "Workflow orchestration",
+    "pos": "n., serverless",
+    "cat": "Serverless",
+    "aws": {
+      "n": "Step Functions",
+      "d": "State machines in ASL JSON; Standard vs Express."
+    },
+    "azure": {
+      "n": "Logic Apps / Durable Functions",
+      "d": "Logic Apps for low-code connectors; Durable Functions for code-first."
+    },
+    "gcp": {
+      "n": "Workflows",
+      "d": "YAML-defined steps calling HTTP/connectors."
+    },
+    "usage": "Azure splits this in two: Logic Apps ≈ Step Functions + a huge SaaS connector library, Durable Functions ≈ code-first orchestration inside your function app. Pick per use case, not by name.",
+    "tf": {
+      "aws": "aws_sfn_state_machine",
+      "azure": "azurerm_logic_app_workflow",
+      "gcp": "google_workflows_workflow"
+    }
+  },
+  {
+    "uni": "Queue (point-to-point)",
+    "pos": "n., messaging",
+    "cat": "Messaging",
+    "aws": {
+      "n": "SQS",
+      "d": "Standard (at-least-once) and FIFO queues; dead-letter queues."
+    },
+    "azure": {
+      "n": "Service Bus Queues",
+      "d": "Enterprise features: sessions, transactions, dedupe. (Storage Queues = the cheap basic tier.)"
+    },
+    "gcp": {
+      "n": "Pub/Sub (pull subscription)",
+      "d": "There is no separate queue product — a pull subscription plays the queue role."
+    },
+    "usage": "GCP simply doesn't have a queue/topic split: Pub/Sub is both SQS and SNS. Coming from AWS, resist looking for 'GCP SQS' — model it as topic + pull subscription with ordering keys if needed.",
+    "tf": {
+      "aws": "aws_sqs_queue",
+      "azure": "azurerm_servicebus_queue",
+      "gcp": "google_pubsub_subscription"
+    }
+  },
+  {
+    "uni": "Pub/sub fan-out",
+    "pos": "n., messaging",
+    "cat": "Messaging",
+    "aws": {
+      "n": "SNS",
+      "d": "Topics fanning out to SQS, Lambda, HTTP, mobile push."
+    },
+    "azure": {
+      "n": "Service Bus Topics / Event Grid",
+      "d": "SB Topics for messages; Event Grid for discrete events with rich filtering."
+    },
+    "gcp": {
+      "n": "Pub/Sub",
+      "d": "Same product as the queue row; push subscriptions do the fan-out."
+    },
+    "usage": "Azure splits by semantics: Event Grid for 'something happened' (events), Service Bus for 'process this' (messages/commands). Mapping SNS blindly onto one of them loses that distinction.",
+    "tf": {
+      "aws": "aws_sns_topic",
+      "azure": "azurerm_eventgrid_topic",
+      "gcp": "google_pubsub_topic"
+    }
+  },
+  {
+    "uni": "Event streaming",
+    "pos": "n., messaging",
+    "cat": "Messaging",
+    "aws": {
+      "n": "Kinesis Data Streams / MSK",
+      "d": "Kinesis is proprietary; MSK is managed Kafka."
+    },
+    "azure": {
+      "n": "Event Hubs",
+      "d": "Kafka-protocol compatible endpoint out of the box."
+    },
+    "gcp": {
+      "n": "Pub/Sub / Managed Kafka",
+      "d": "Pub/Sub covers most streaming; Google now offers managed Kafka too."
+    },
+    "usage": "Event Hubs speaking the Kafka protocol natively is the killer translation fact — Kafka clients often just work with a connection-string change, no MSK-style cluster to run.",
+    "tf": {
+      "aws": "aws_kinesis_stream",
+      "azure": "azurerm_eventhub",
+      "gcp": "google_pubsub_topic"
+    }
+  },
+  {
+    "uni": "Identity & access model",
+    "pos": "n., identity",
+    "cat": "Identity & Security",
+    "aws": {
+      "n": "IAM (users, roles, policies)",
+      "d": "JSON policies attached to identities; roles are assumed via STS."
+    },
+    "azure": {
+      "n": "Entra ID + Azure RBAC",
+      "d": "Identity lives in Entra (tenant-wide); RBAC = role definitions assigned at a scope (MG/sub/RG/resource)."
+    },
+    "gcp": {
+      "n": "Cloud IAM",
+      "d": "Members get roles on resources; permissions inherit down Org → Folder → Project."
+    },
+    "usage": "The deepest break in the whole dictionary. AWS attaches policy documents to identities; Azure/GCP grant (identity, role, scope) triples with inheritance. 'Write me the IAM policy JSON' has no Azure translation — you pick a role definition and a scope instead.",
+    "tf": {
+      "aws": "aws_iam_role",
+      "azure": "azurerm_role_assignment",
+      "gcp": "google_project_iam_member"
+    }
+  },
+  {
+    "uni": "Machine identity",
+    "pos": "n., identity",
+    "cat": "Identity & Security",
+    "aws": {
+      "n": "IAM Role (+ instance profile)",
+      "d": "EC2/Lambda assume roles; IRSA wires roles to K8s service accounts."
+    },
+    "azure": {
+      "n": "Managed Identity",
+      "d": "System- or user-assigned; the platform handles credentials invisibly."
+    },
+    "gcp": {
+      "n": "Service Account",
+      "d": "A first-class identity that is ALSO an email address; attached to VMs, functions, GKE pods (Workload Identity)."
+    },
+    "usage": "GCP service accounts are both an identity and a resource you can grant others permission to impersonate — richer but more foot-gunny than instance profiles. Azure Managed Identity is the most 'invisible' of the three.",
+    "tf": {
+      "aws": "aws_iam_instance_profile",
+      "azure": "azurerm_user_assigned_identity",
+      "gcp": "google_service_account"
+    }
+  },
+  {
+    "uni": "Secrets store",
+    "pos": "n., identity",
+    "cat": "Identity & Security",
+    "aws": {
+      "n": "Secrets Manager (+ SSM Parameter Store)",
+      "d": "Rotation lambdas; Parameter Store as the budget option."
+    },
+    "azure": {
+      "n": "Key Vault (secrets)",
+      "d": "One vault holds secrets AND keys AND certificates."
+    },
+    "gcp": {
+      "n": "Secret Manager",
+      "d": "Versioned secrets, IAM-gated, simple."
+    },
+    "usage": "Key Vault bundles what AWS splits into Secrets Manager + KMS + ACM. One Azure resource, three AWS bills — decompose it when translating architectures, not names.",
+    "tf": {
+      "aws": "aws_secretsmanager_secret",
+      "azure": "azurerm_key_vault_secret",
+      "gcp": "google_secret_manager_secret"
+    }
+  },
+  {
+    "uni": "Encryption key management",
+    "pos": "n., identity",
+    "cat": "Identity & Security",
+    "aws": {
+      "n": "KMS",
+      "d": "CMKs, key policies (their own mini-IAM), envelope encryption everywhere."
+    },
+    "azure": {
+      "n": "Key Vault (keys) / Managed HSM",
+      "d": "Keys live in vaults; HSM tiers for compliance."
+    },
+    "gcp": {
+      "n": "Cloud KMS",
+      "d": "Key rings → keys → versions; CMEK is the cross-service pattern."
+    },
+    "usage": "AWS KMS key policies are a parallel permission system that can lock out even account admins — Azure and GCP key access rides the normal RBAC/IAM plane instead. Fewer surprises, less isolation.",
+    "tf": {
+      "aws": "aws_kms_key",
+      "azure": "azurerm_key_vault_key",
+      "gcp": "google_kms_crypto_key"
+    }
+  },
+  {
+    "uni": "API audit trail",
+    "pos": "n., identity",
+    "cat": "Identity & Security",
+    "aws": {
+      "n": "CloudTrail",
+      "d": "Every API call, deliverable to S3/CloudWatch; org trails for all accounts."
+    },
+    "azure": {
+      "n": "Activity Log (+ Entra audit logs)",
+      "d": "Control-plane operations per subscription; route via diagnostic settings."
+    },
+    "gcp": {
+      "n": "Cloud Audit Logs",
+      "d": "Admin Activity always on and free; Data Access logs opt-in."
+    },
+    "usage": "GCP's Admin Activity logs are on by default and unpaid — the CloudTrail-setup checklist item doesn't exist. But Data Access logs (the expensive, chatty ones) are off until you enable them.",
+    "tf": {
+      "aws": "aws_cloudtrail",
+      "azure": "azurerm_monitor_diagnostic_setting",
+      "gcp": "google_project_iam_audit_config"
+    }
+  },
+  {
+    "uni": "Cloud security posture",
+    "pos": "n., identity",
+    "cat": "Identity & Security",
+    "aws": {
+      "n": "Security Hub + GuardDuty + Config",
+      "d": "Three products: findings hub, threat detection, config compliance."
+    },
+    "azure": {
+      "n": "Microsoft Defender for Cloud",
+      "d": "One umbrella product with per-resource-type Defender plans."
+    },
+    "gcp": {
+      "n": "Security Command Center",
+      "d": "Standard vs Premium tiers; Premium adds threat detection."
+    },
+    "usage": "Azure and GCP bundle what AWS sells as three-plus SKUs. When someone asks for 'GuardDuty on Azure', the answer is a Defender plan toggle, not a new deployment.",
+    "tf": {
+      "aws": "aws_securityhub_account",
+      "azure": "azurerm_security_center_subscription_pricing",
+      "gcp": "google_scc_notification_config"
+    }
+  },
+  {
+    "uni": "Metrics & alerting",
+    "pos": "n., operations",
+    "cat": "Ops & Observability",
+    "aws": {
+      "n": "CloudWatch Metrics/Alarms",
+      "d": "Namespaces, dimensions, composite alarms."
+    },
+    "azure": {
+      "n": "Azure Monitor Metrics",
+      "d": "Metric alerts + action groups (the SNS-topic analog for notifications)."
+    },
+    "gcp": {
+      "n": "Cloud Monitoring",
+      "d": "Ex-Stackdriver; alerting policies + notification channels; MQL/PromQL."
+    },
+    "usage": "Azure 'action groups' ≈ the SNS topic your CloudWatch alarm notifies — a separate resource people forget to translate. GCP speaks PromQL natively, handy if you're Grafana-brained.",
+    "tf": {
+      "aws": "aws_cloudwatch_metric_alarm",
+      "azure": "azurerm_monitor_metric_alert",
+      "gcp": "google_monitoring_alert_policy"
+    }
+  },
+  {
+    "uni": "Log aggregation",
+    "pos": "n., operations",
+    "cat": "Ops & Observability",
+    "aws": {
+      "n": "CloudWatch Logs",
+      "d": "Log groups/streams; Logs Insights for queries."
+    },
+    "azure": {
+      "n": "Log Analytics Workspace",
+      "d": "THE central sink; queried with KQL (a genuinely different query language to learn)."
+    },
+    "gcp": {
+      "n": "Cloud Logging",
+      "d": "Log buckets + Log Analytics (BigQuery-backed); logs route via sinks."
+    },
+    "usage": "On Azure, everything funnels into a Log Analytics Workspace and you must learn KQL — budget real ramp-up time for it; it's the biggest 'new language' cost of an AWS→Azure move.",
+    "tf": {
+      "aws": "aws_cloudwatch_log_group",
+      "azure": "azurerm_log_analytics_workspace",
+      "gcp": "google_logging_project_sink"
+    }
+  },
+  {
+    "uni": "Cost visibility",
+    "pos": "n., operations",
+    "cat": "Ops & Observability",
+    "aws": {
+      "n": "Cost Explorer + CUR",
+      "d": "CUR (now Data Exports) to S3 + Athena is the serious path — the one your tfcost tooling world lives in."
+    },
+    "azure": {
+      "n": "Cost Management + exports",
+      "d": "Cost Management (ex-Cloudyn) with FOCUS-format exports to storage."
+    },
+    "gcp": {
+      "n": "Billing export to BigQuery",
+      "d": "Detailed usage lands in BigQuery tables; query with SQL directly."
+    },
+    "usage": "GCP's billing-in-BigQuery is the cleanest programmatic story — no Athena/CUR plumbing, just SQL. All three now support the FOCUS open billing schema, which is the real 'universal terminology' win in cost data.",
+    "tf": {
+      "aws": "aws_bcmdataexports_export",
+      "azure": "azurerm_billing_account_cost_management_export",
+      "gcp": "google_billing_budget"
+    }
+  }
+]
