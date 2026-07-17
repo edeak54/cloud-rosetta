@@ -15,7 +15,7 @@
 
 Pick the cloud you think in — AWS, Azure, or GCP — and every concept re-anchors to *your* vocabulary. Each entry translates the service names, explains **where the analogy quietly breaks**, and maps the Terraform resource on all three providers, with a link to the official registry docs as proof.
 
-**Live site:** `tba`
+**Live site:** `https://edeak54.github.io/cloud-rosetta/`
 
 ---
 
